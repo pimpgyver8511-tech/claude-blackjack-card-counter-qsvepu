@@ -14,17 +14,25 @@
     <button id="settingsToggle" class="icon-btn" aria-label="Einstellungen">⚙</button>
   </header>
 
+  <div class="shoe-bar">
+    <div class="shoe-decks">
+      <label for="deckCount">Decks im Casino-Schuh</label>
+      <div class="deck-input-row">
+        <input type="number" id="deckCount" min="1" max="12" step="1" value="6">
+        <div class="deck-presets" id="deckPresets">
+          <button type="button" class="preset-btn" data-decks="1">1</button>
+          <button type="button" class="preset-btn" data-decks="2">2</button>
+          <button type="button" class="preset-btn" data-decks="4">4</button>
+          <button type="button" class="preset-btn" data-decks="6">6</button>
+          <button type="button" class="preset-btn" data-decks="8">8</button>
+        </div>
+      </div>
+    </div>
+    <button id="resetShoeBtn" class="danger-btn">🔄 Schuh komplett zurücksetzen</button>
+  </div>
+
   <div id="settingsPanel" class="panel hidden">
     <div class="settings-grid">
-      <label>Decks im Schuh
-        <select id="deckCount">
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="4">4</option>
-          <option value="6" selected>6</option>
-          <option value="8">8</option>
-        </select>
-      </label>
       <label>Dealer bei Soft 17
         <select id="dealerSoft17">
           <option value="stand" selected>Stand (S17)</option>
@@ -37,7 +45,6 @@
         <input type="number" id="betUnit" value="10" min="1" step="1">
       </label>
     </div>
-    <button id="resetShoeBtn" class="danger-btn">🔄 Neuer Schuh (Count zurücksetzen)</button>
   </div>
 
   <div class="count-bar">

@@ -249,6 +249,9 @@ function buildTargetKey(kind, idx) {
 
 function render() {
   document.getElementById('deckCount').value = state.decks;
+  document.querySelectorAll('.preset-btn').forEach((btn) => {
+    btn.classList.toggle('active', Number(btn.getAttribute('data-decks')) === state.decks);
+  });
   document.getElementById('dealerSoft17').value = state.rules.s17 ? 'stand' : 'hit';
   document.getElementById('rulesDas').checked = state.rules.das;
   document.getElementById('rulesSurrender').checked = state.rules.surrender;
@@ -467,6 +470,34 @@ function undo() {
   render();
 }
 
+function resetShoeState() {
+  state.runningCount = 0;
+  state.cardsSeen = 0;
+  state.usedCards = {};
+  state.dealer = [];
+  state.playerHands = [[]];
+  state.other = [];
+  state.activeHandIndex = 0;
+  state.activeTarget = 'dealer';
+  state.log = [];
+}
+
+function applyDeckCount(newDecks) {
+  const clamped = Math.min(Math.max(Math.round(newDecks) || 1, 1), 12);
+  if (clamped === state.decks) {
+    render();
+    return;
+  }
+  const hasProgress = state.cardsSeen > 0;
+  if (hasProgress && !confirm(`Deckanzahl auf ${clamped} ändern setzt den aktuellen Schuh (Count) zurück. Fortfahren?`)) {
+    render();
+    return;
+  }
+  state.decks = clamped;
+  resetShoeState();
+  render();
+}
+
 function newRound() {
   state.dealer = [];
   state.playerHands = [[]];
@@ -479,15 +510,7 @@ function newRound() {
 
 function resetShoe() {
   if (!confirm('Neuen Schuh starten? Der Count wird auf 0 zurückgesetzt.')) return;
-  state.runningCount = 0;
-  state.cardsSeen = 0;
-  state.usedCards = {};
-  state.dealer = [];
-  state.playerHands = [[]];
-  state.other = [];
-  state.activeHandIndex = 0;
-  state.activeTarget = 'dealer';
-  state.log = [];
+  resetShoeState();
   render();
 }
 
@@ -520,8 +543,12 @@ document.getElementById('settingsToggle').addEventListener('click', () => {
 });
 
 document.getElementById('deckCount').addEventListener('change', (e) => {
-  state.decks = Number(e.target.value);
-  render();
+  applyDeckCount(Number(e.target.value));
+});
+document.querySelectorAll('.preset-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    applyDeckCount(Number(btn.getAttribute('data-decks')));
+  });
 });
 document.getElementById('dealerSoft17').addEventListener('change', (e) => {
   state.rules.s17 = e.target.value === 'stand';

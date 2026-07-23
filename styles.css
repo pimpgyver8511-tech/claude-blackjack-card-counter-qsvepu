@@ -104,6 +104,62 @@ html, body {
   cursor: pointer;
 }
 
+.shoe-bar {
+  background: var(--panel);
+  border: 1px solid #2a5a3d;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.shoe-decks label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+.deck-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.deck-input-row input[type=number] {
+  width: 64px;
+  background: #0e2e1e;
+  color: var(--accent);
+  border: 1px solid #2a5a3d;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+}
+.deck-presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.preset-btn {
+  background: #0e2e1e;
+  border: 1px solid #2a5a3d;
+  color: var(--text-dim);
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.preset-btn.active {
+  background: var(--accent);
+  color: #1a1a1a;
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
 .count-bar {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
