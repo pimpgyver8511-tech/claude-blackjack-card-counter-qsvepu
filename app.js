@@ -316,23 +316,14 @@ function render() {
   state.playerHands.forEach((hand, idx) => {
     const block = document.createElement('section');
     block.className = 'hand-block player-block';
+    block.setAttribute('data-target', buildTargetKey('player', idx));
     const isActive = state.activeTarget === buildTargetKey('player', idx);
     if (isActive) block.classList.add('active-target');
 
     const header = document.createElement('div');
     header.className = 'hand-header';
     const label = state.playerHands.length > 1 ? `Spieler – Hand ${idx + 1}` : 'Spieler';
-    header.innerHTML = `<h2>${label}</h2>`;
-    const btn = document.createElement('button');
-    btn.className = 'target-btn' + (isActive ? ' active' : '');
-    btn.textContent = isActive ? 'aktiv' : 'Karten hier zufügen';
-    btn.addEventListener('click', () => {
-      state.activeTarget = buildTargetKey('player', idx);
-      state.activeHandIndex = idx;
-      saveState();
-      render();
-    });
-    header.appendChild(btn);
+    header.innerHTML = `<h2>${label}</h2><span class="target-badge">● aktiv</span>`;
     block.appendChild(header);
 
     const cardsEl = document.createElement('div');
@@ -348,14 +339,9 @@ function render() {
     playerArea.appendChild(block);
   });
 
-  // dealer active-target highlight
+  // dealer/other active-target highlight
   document.querySelector('.dealer-block').classList.toggle('active-target', state.activeTarget === 'dealer');
   document.querySelector('.other-block').classList.toggle('active-target', state.activeTarget === 'other');
-
-  document.querySelectorAll('.target-btn[data-target]').forEach((btn) => {
-    const t = btn.getAttribute('data-target');
-    btn.classList.toggle('active', state.activeTarget === t);
-  });
 
   document.getElementById('activeTargetLabel').textContent = activeTargetLabelText();
 
@@ -602,11 +588,15 @@ document.getElementById('newRoundBtn').addEventListener('click', newRound);
 document.getElementById('splitBtn').addEventListener('click', splitActiveHand);
 document.getElementById('addHandBtn').addEventListener('click', addPlayerHand);
 
-document.querySelectorAll('.target-btn[data-target]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    state.activeTarget = btn.getAttribute('data-target');
-    render();
-  });
+document.querySelector('.table').addEventListener('click', (e) => {
+  const block = e.target.closest('[data-target]');
+  if (!block) return;
+  const target = block.getAttribute('data-target');
+  state.activeTarget = target;
+  if (target.startsWith('player-')) {
+    state.activeHandIndex = Number(target.split('-')[1]);
+  }
+  render();
 });
 
 render();

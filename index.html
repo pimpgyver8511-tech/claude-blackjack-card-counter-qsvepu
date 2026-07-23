@@ -73,10 +73,10 @@
   </div>
 
   <main class="table">
-    <section class="hand-block dealer-block">
+    <section class="hand-block dealer-block" data-target="dealer">
       <div class="hand-header">
         <h2>Dealer</h2>
-        <button class="target-btn" data-target="dealer">Karten hier zufügen</button>
+        <span class="target-badge">● aktiv</span>
       </div>
       <div class="hand-cards" id="dealerHand"></div>
       <div class="hand-total" id="dealerTotal"></div>
@@ -84,14 +84,15 @@
 
     <section id="playerArea" class="player-area"></section>
 
-    <section class="hand-block other-block">
+    <section class="hand-block other-block" data-target="other">
       <div class="hand-header">
         <h2>Weitere Karten <span class="hint">(andere Mitspieler am Tisch)</span></h2>
-        <button class="target-btn" data-target="other">Karten hier zufügen</button>
+        <span class="target-badge">● aktiv</span>
       </div>
       <div class="hand-cards" id="otherHand"></div>
     </section>
   </main>
+  <p class="tap-hint">Zum Aktivieren einfach auf Dealer-, Spieler- oder "Weitere Karten"-Bereich tippen</p>
 
   <div id="advicePanel" class="advice-panel hidden">
     <div class="advice-main" id="adviceMain"></div>
