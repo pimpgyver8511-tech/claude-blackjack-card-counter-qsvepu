@@ -17,6 +17,12 @@
     <button id="settingsToggle" class="icon-btn" aria-label="Einstellungen">⚙</button>
   </header>
 
+  <div class="mode-toggle">
+    <button type="button" class="mode-btn active" data-mode="live">🎥 Live-Tracking</button>
+    <button type="button" class="mode-btn" data-mode="practice">🎓 Übungsmodus</button>
+  </div>
+
+  <div id="liveMode">
   <div class="shoe-bar">
     <div class="shoe-decks">
       <label for="deckCount">Decks im Casino-Schuh</label>
@@ -114,6 +120,63 @@
   </div>
 
   <div class="picker" id="picker"></div>
+  </div>
+
+  <div id="practiceMode" class="hidden">
+    <div class="count-bar">
+      <div class="count-item">
+        <span class="count-label">Running Count</span>
+        <span class="count-value" id="pRunningCount">0</span>
+      </div>
+      <div class="count-item">
+        <span class="count-label">True Count</span>
+        <span class="count-value" id="pTrueCount">0.0</span>
+      </div>
+      <div class="count-item">
+        <span class="count-label">Decks übrig</span>
+        <span class="count-value" id="pDecksRemaining">6.0</span>
+      </div>
+      <div class="count-item">
+        <span class="count-label">Bankroll</span>
+        <span class="count-value" id="pBankroll">1000€</span>
+      </div>
+      <div class="count-item">
+        <span class="count-label">Bilanz</span>
+        <span class="count-value" id="pStats">0-0-0</span>
+      </div>
+      <div class="count-item">
+        <span class="count-label">Aktueller Einsatz</span>
+        <span class="count-value" id="pCurrentBet">–</span>
+      </div>
+    </div>
+
+    <main class="table">
+      <section class="hand-block">
+        <div class="hand-header"><h2>Dealer</h2></div>
+        <div class="hand-cards" id="pDealerHand"></div>
+        <div class="hand-total" id="pDealerTotal"></div>
+      </section>
+      <section id="pPlayerArea" class="player-area"></section>
+    </main>
+
+    <div id="pResultBanner" class="result-banner hidden"></div>
+
+    <div id="pAdvicePanel" class="advice-panel hidden">
+      <div class="advice-main" id="pAdviceMain"></div>
+      <div class="advice-sub" id="pAdviceSub"></div>
+    </div>
+
+    <div class="controls" id="pActionControls">
+      <button id="pHitBtn" class="ctrl-btn">Hit</button>
+      <button id="pStandBtn" class="ctrl-btn">Stand</button>
+      <button id="pDoubleBtn" class="ctrl-btn">Double</button>
+      <button id="pSplitBtn" class="ctrl-btn hidden">Split</button>
+    </div>
+    <div class="controls controls-2">
+      <button id="pDealBtn" class="ctrl-btn primary">🃏 Neue Runde austeilen</button>
+      <button id="pResetBtn" class="ctrl-btn ctrl-danger">Übung zurücksetzen</button>
+    </div>
+  </div>
 
 </div>
 <script src="app.js?v=4"></script>

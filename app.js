@@ -599,4 +599,409 @@ document.querySelector('.table').addEventListener('click', (e) => {
   render();
 });
 
+// ===================== Übungsmodus (simulierter Dealer) =====================
+
+const PRACTICE_STORAGE_KEY = 'bj-practice-state-v1';
+
+function buildShoe(decks) {
+  const shoe = [];
+  for (let d = 0; d < decks; d++) {
+    RANKS.forEach((rank) => {
+      SUITS.forEach((suit) => {
+        shoe.push({ rank, suit: suit.symbol });
+      });
+    });
+  }
+  for (let i = shoe.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shoe[i], shoe[j]] = [shoe[j], shoe[i]];
+  }
+  return shoe;
+}
+
+function practiceDefaults() {
+  return {
+    decks: 6,
+    shoe: buildShoe(6),
+    runningCount: 0,
+    cardsSeen: 0,
+    dealer: [],
+    playerHands: [[]],
+    handBets: [0],
+    handDone: [false],
+    activeHandIndex: 0,
+    bankroll: 1000,
+    handsPlayed: 0,
+    handsWon: 0,
+    handsLost: 0,
+    handsPush: 0,
+    phase: 'betting',
+    resultMessage: '',
+    resultClass: '',
+  };
+}
+
+function loadPracticeState() {
+  try {
+    const raw = localStorage.getItem(PRACTICE_STORAGE_KEY);
+    if (!raw) return practiceDefaults();
+    const parsed = JSON.parse(raw);
+    const merged = Object.assign(practiceDefaults(), parsed);
+    if (!merged.shoe || merged.shoe.length < 20) merged.shoe = buildShoe(merged.decks);
+    return merged;
+  } catch (e) {
+    return practiceDefaults();
+  }
+}
+
+let pState = loadPracticeState();
+
+function savePracticeState() {
+  localStorage.setItem(PRACTICE_STORAGE_KEY, JSON.stringify(pState));
+}
+
+function practiceDrawCard(hidden) {
+  const card = pState.shoe.pop();
+  if (!hidden) {
+    pState.runningCount += hiLoValue(card.rank);
+    pState.cardsSeen += 1;
+  }
+  return { rank: card.rank, suit: card.suit, hidden: !!hidden };
+}
+
+function practiceRevealHole() {
+  const hole = pState.dealer.find((c) => c.hidden);
+  if (hole) {
+    hole.hidden = false;
+    pState.runningCount += hiLoValue(hole.rank);
+    pState.cardsSeen += 1;
+  }
+}
+
+function practiceActiveHand() {
+  return pState.playerHands[pState.activeHandIndex];
+}
+
+function practiceResolveNaturals() {
+  const playerHand = pState.playerHands[0];
+  const pTotal = handTotal(playerHand);
+  const dTotal = handTotal(pState.dealer);
+  const playerBJ = playerHand.length === 2 && pTotal.value === 21;
+  const dealerBJ = pState.dealer.length === 2 && dTotal.value === 21;
+
+  if (!playerBJ && !dealerBJ) return false;
+  if (dealerBJ) practiceRevealHole();
+
+  const bet = pState.handBets[0];
+  let net = 0;
+  let msg = '';
+  let cls = '';
+  if (playerBJ && dealerBJ) {
+    net = 0;
+    msg = 'Push — beide haben Blackjack';
+    cls = 'push';
+    pState.handsPush++;
+  } else if (playerBJ) {
+    net = Math.round(bet * 1.5);
+    msg = `Blackjack! Gewinn +${net}€`;
+    cls = 'win';
+    pState.handsWon++;
+  } else {
+    net = -bet;
+    msg = `Dealer hat Blackjack — verloren ${net}€`;
+    cls = 'lose';
+    pState.handsLost++;
+  }
+  pState.bankroll += net;
+  pState.handsPlayed++;
+  pState.handDone[0] = true;
+  pState.resultMessage = msg;
+  pState.resultClass = cls;
+  pState.phase = 'result';
+  return true;
+}
+
+function practiceDealNewRound() {
+  if (pState.phase === 'player' || pState.phase === 'dealer') return;
+  if (pState.shoe.length < 20) {
+    pState.shoe = buildShoe(pState.decks);
+    pState.runningCount = 0;
+    pState.cardsSeen = 0;
+  }
+
+  const decksRemaining = Math.max((pState.decks * 52 - pState.cardsSeen) / 52, 0.25);
+  const trueCount = pState.runningCount / decksRemaining;
+  const unit = Number(state.betUnit) || 10;
+  const bet = Math.round(unit * BET_STEPS[getBetStepIndex(trueCount)].mult);
+
+  pState.dealer = [];
+  pState.playerHands = [[]];
+  pState.handBets = [bet];
+  pState.handDone = [false];
+  pState.activeHandIndex = 0;
+  pState.resultMessage = '';
+  pState.resultClass = '';
+
+  pState.playerHands[0].push(practiceDrawCard(false));
+  pState.dealer.push(practiceDrawCard(false));
+  pState.playerHands[0].push(practiceDrawCard(false));
+  pState.dealer.push(practiceDrawCard(true));
+
+  pState.phase = 'player';
+  practiceResolveNaturals();
+  renderPractice();
+}
+
+function practiceResolveRound() {
+  const dTotal = handTotal(pState.dealer);
+  const messages = [];
+  let totalNet = 0;
+  pState.playerHands.forEach((hand, i) => {
+    const bet = pState.handBets[i];
+    const pTotal = handTotal(hand);
+    let net = 0;
+    let outcome = '';
+    if (pTotal.bust) {
+      net = -bet;
+      outcome = 'Bust – verloren';
+      pState.handsLost++;
+    } else if (dTotal.bust) {
+      net = bet;
+      outcome = 'Dealer bust – gewonnen';
+      pState.handsWon++;
+    } else if (pTotal.value > dTotal.value) {
+      net = bet;
+      outcome = 'Gewonnen';
+      pState.handsWon++;
+    } else if (pTotal.value < dTotal.value) {
+      net = -bet;
+      outcome = 'Verloren';
+      pState.handsLost++;
+    } else {
+      net = 0;
+      outcome = 'Push';
+      pState.handsPush++;
+    }
+    totalNet += net;
+    pState.bankroll += net;
+    pState.handsPlayed++;
+    const label = pState.playerHands.length > 1 ? `Hand ${i + 1}: ` : '';
+    messages.push(`${label}${outcome} (${net >= 0 ? '+' : ''}${net}€)`);
+  });
+  pState.resultMessage = messages.join(' · ');
+  pState.resultClass = totalNet > 0 ? 'win' : totalNet < 0 ? 'lose' : 'push';
+  pState.phase = 'result';
+}
+
+function practiceDealerTurn() {
+  pState.phase = 'dealer';
+  const anyAlive = pState.playerHands.some((hand) => !handTotal(hand).bust);
+  practiceRevealHole();
+  if (anyAlive) {
+    let total = handTotal(pState.dealer);
+    while (total.value < 17 || (total.value === 17 && total.soft && !state.rules.s17)) {
+      pState.dealer.push(practiceDrawCard(false));
+      total = handTotal(pState.dealer);
+    }
+  }
+  practiceResolveRound();
+}
+
+function practiceAdvanceHand() {
+  let next = pState.activeHandIndex;
+  while (next < pState.playerHands.length && pState.handDone[next]) {
+    next++;
+  }
+  if (next < pState.playerHands.length) {
+    pState.activeHandIndex = next;
+  } else {
+    practiceDealerTurn();
+  }
+}
+
+function practiceHit() {
+  if (pState.phase !== 'player') return;
+  const hand = practiceActiveHand();
+  hand.push(practiceDrawCard(false));
+  if (handTotal(hand).bust) {
+    pState.handDone[pState.activeHandIndex] = true;
+    practiceAdvanceHand();
+  }
+  renderPractice();
+}
+
+function practiceStand() {
+  if (pState.phase !== 'player') return;
+  pState.handDone[pState.activeHandIndex] = true;
+  practiceAdvanceHand();
+  renderPractice();
+}
+
+function practiceDouble() {
+  if (pState.phase !== 'player') return;
+  const hand = practiceActiveHand();
+  if (hand.length !== 2) return;
+  pState.handBets[pState.activeHandIndex] *= 2;
+  hand.push(practiceDrawCard(false));
+  pState.handDone[pState.activeHandIndex] = true;
+  practiceAdvanceHand();
+  renderPractice();
+}
+
+function practiceSplit() {
+  if (pState.phase !== 'player') return;
+  const idx = pState.activeHandIndex;
+  const hand = pState.playerHands[idx];
+  if (hand.length !== 2 || pState.playerHands.length >= 4) return;
+  if (pairGroup(hand[0].rank) !== pairGroup(hand[1].rank)) return;
+
+  const isAces = pairGroup(hand[0].rank) === 'A';
+  const [c1, c2] = hand;
+  const bet = pState.handBets[idx];
+
+  pState.playerHands[idx] = [c1];
+  pState.playerHands.splice(idx + 1, 0, [c2]);
+  pState.handBets.splice(idx + 1, 0, bet);
+  pState.handDone.splice(idx + 1, 0, false);
+
+  pState.playerHands[idx].push(practiceDrawCard(false));
+  pState.playerHands[idx + 1].push(practiceDrawCard(false));
+
+  if (isAces) {
+    pState.handDone[idx] = true;
+    pState.handDone[idx + 1] = true;
+    practiceAdvanceHand();
+  }
+  renderPractice();
+}
+
+function practiceReset() {
+  if (!confirm('Übungssitzung zurücksetzen? Bankroll, Statistik und Count werden auf Anfang gesetzt.')) return;
+  const decks = pState.decks;
+  pState = practiceDefaults();
+  pState.decks = decks;
+  pState.shoe = buildShoe(decks);
+  renderPractice();
+}
+
+function renderPractice() {
+  const decksRemaining = Math.max((pState.decks * 52 - pState.cardsSeen) / 52, 0.25);
+  const trueCount = pState.runningCount / decksRemaining;
+
+  document.getElementById('pRunningCount').textContent = pState.runningCount > 0 ? `+${pState.runningCount}` : pState.runningCount;
+  document.getElementById('pTrueCount').textContent = (trueCount > 0 ? '+' : '') + trueCount.toFixed(1);
+  document.getElementById('pDecksRemaining').textContent = decksRemaining.toFixed(1);
+  document.getElementById('pBankroll').textContent = `${Math.round(pState.bankroll)}€`;
+  document.getElementById('pStats').textContent = `${pState.handsWon}-${pState.handsLost}-${pState.handsPush}`;
+  const currentBet = pState.handBets[pState.activeHandIndex];
+  document.getElementById('pCurrentBet').textContent = currentBet ? `${currentBet}€` : '–';
+
+  const dealerEl = document.getElementById('pDealerHand');
+  dealerEl.innerHTML = '';
+  pState.dealer.forEach((c) => {
+    if (c.hidden) {
+      const back = document.createElement('div');
+      back.className = 'card card-back';
+      back.textContent = '';
+      dealerEl.appendChild(back);
+    } else {
+      dealerEl.appendChild(renderCardEl(c));
+    }
+  });
+  const dealerTotalEl = document.getElementById('pDealerTotal');
+  const hasHidden = pState.dealer.some((c) => c.hidden);
+  if (pState.dealer.length && !hasHidden) {
+    dealerTotalEl.innerHTML = totalLabel(handTotal(pState.dealer));
+  } else if (pState.dealer.length) {
+    dealerTotalEl.textContent = 'verdeckt';
+  } else {
+    dealerTotalEl.textContent = '';
+  }
+
+  const playerArea = document.getElementById('pPlayerArea');
+  playerArea.innerHTML = '';
+  pState.playerHands.forEach((hand, idx) => {
+    const block = document.createElement('section');
+    block.className = 'hand-block player-block';
+    if (idx === pState.activeHandIndex && pState.phase === 'player') block.classList.add('active-target');
+    const header = document.createElement('div');
+    header.className = 'hand-header';
+    const label = pState.playerHands.length > 1
+      ? `Spieler – Hand ${idx + 1} (${pState.handBets[idx]}€)`
+      : `Spieler${pState.handBets[idx] ? ` (${pState.handBets[idx]}€)` : ''}`;
+    header.innerHTML = `<h2>${label}</h2>`;
+    block.appendChild(header);
+    const cardsEl = document.createElement('div');
+    cardsEl.className = 'hand-cards';
+    hand.forEach((c) => cardsEl.appendChild(renderCardEl(c)));
+    block.appendChild(cardsEl);
+    const totalEl = document.createElement('div');
+    totalEl.className = 'hand-total';
+    if (hand.length) totalEl.innerHTML = totalLabel(handTotal(hand));
+    block.appendChild(totalEl);
+    playerArea.appendChild(block);
+  });
+
+  const banner = document.getElementById('pResultBanner');
+  if (pState.phase === 'result' && pState.resultMessage) {
+    banner.textContent = pState.resultMessage;
+    banner.className = `result-banner ${pState.resultClass}`;
+  } else {
+    banner.className = 'result-banner hidden';
+  }
+
+  const advicePanel = document.getElementById('pAdvicePanel');
+  const adviceMain = document.getElementById('pAdviceMain');
+  const adviceSub = document.getElementById('pAdviceSub');
+  if (pState.phase === 'player' && pState.dealer.length) {
+    const dVal = cardValue(pState.dealer[0].rank);
+    const advice = getAdvice(practiceActiveHand(), dVal, trueCount, state.rules);
+    if (advice) {
+      advicePanel.classList.remove('hidden');
+      const info = ACTION_LABELS[advice.action] || { label: advice.action, cls: '' };
+      adviceMain.textContent = info.label;
+      adviceMain.className = 'advice-main ' + info.cls;
+      adviceSub.textContent = advice.deviation ? 'Count-Abweichung aktiv' : '';
+    } else {
+      advicePanel.classList.add('hidden');
+    }
+  } else {
+    advicePanel.classList.add('hidden');
+  }
+
+  const hand = practiceActiveHand();
+  const inPlayerPhase = pState.phase === 'player';
+  document.getElementById('pHitBtn').disabled = !inPlayerPhase;
+  document.getElementById('pStandBtn').disabled = !inPlayerPhase;
+  document.getElementById('pDoubleBtn').disabled = !inPlayerPhase || !hand || hand.length !== 2;
+  const canSplit = inPlayerPhase && hand && hand.length === 2 &&
+    pairGroup(hand[0].rank) === pairGroup(hand[1].rank) && pState.playerHands.length < 4;
+  document.getElementById('pSplitBtn').classList.toggle('hidden', !canSplit);
+
+  document.getElementById('pActionControls').classList.toggle('hidden', !inPlayerPhase);
+  document.getElementById('pDealBtn').classList.toggle('hidden', inPlayerPhase || pState.phase === 'dealer');
+
+  savePracticeState();
+}
+
+function setMode(mode) {
+  document.getElementById('liveMode').classList.toggle('hidden', mode !== 'live');
+  document.getElementById('practiceMode').classList.toggle('hidden', mode !== 'practice');
+  document.querySelectorAll('.mode-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-mode') === mode);
+  });
+  if (mode === 'practice') renderPractice();
+}
+
+document.querySelectorAll('.mode-btn').forEach((btn) => {
+  btn.addEventListener('click', () => setMode(btn.getAttribute('data-mode')));
+});
+
+document.getElementById('pDealBtn').addEventListener('click', practiceDealNewRound);
+document.getElementById('pHitBtn').addEventListener('click', practiceHit);
+document.getElementById('pStandBtn').addEventListener('click', practiceStand);
+document.getElementById('pDoubleBtn').addEventListener('click', practiceDouble);
+document.getElementById('pSplitBtn').addEventListener('click', practiceSplit);
+document.getElementById('pResetBtn').addEventListener('click', practiceReset);
+
 render();
