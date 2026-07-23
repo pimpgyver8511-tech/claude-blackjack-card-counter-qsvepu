@@ -210,15 +210,26 @@ function insuranceAdvice(trueCount) {
   return trueCount >= 3;
 }
 
+const BET_STEPS = [
+  { tc: -Infinity, mult: 1 },
+  { tc: 1, mult: 1.5 },
+  { tc: 2, mult: 2 },
+  { tc: 3, mult: 4 },
+  { tc: 4, mult: 6 },
+  { tc: 5, mult: 8 },
+];
+
+function getBetStepIndex(trueCount) {
+  let idx = 0;
+  for (let i = 0; i < BET_STEPS.length; i++) {
+    if (trueCount >= BET_STEPS[i].tc) idx = i;
+  }
+  return idx;
+}
+
 function betSuggestion(trueCount) {
   const unit = Number(state.betUnit) || 10;
-  let mult;
-  if (trueCount >= 5) mult = 8;
-  else if (trueCount >= 4) mult = 6;
-  else if (trueCount >= 3) mult = 4;
-  else if (trueCount >= 2) mult = 2;
-  else if (trueCount >= 1) mult = 1.5;
-  else mult = 1;
+  const mult = BET_STEPS[getBetStepIndex(trueCount)].mult;
   const amount = Math.round(unit * mult);
   return `${mult}x Einheit (${amount}€)`;
 }
@@ -265,6 +276,24 @@ function render() {
   document.getElementById('decksRemaining').textContent = decksRemaining.toFixed(1);
   document.getElementById('cardsSeen').textContent = `${state.cardsSeen}/${state.decks * 52}`;
   document.getElementById('betSuggestion').textContent = betSuggestion(trueCount);
+
+  const betStepIdx = getBetStepIndex(trueCount);
+  const betScale = document.getElementById('betScale');
+  betScale.innerHTML = '';
+  BET_STEPS.forEach((step, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'step' + (i === betStepIdx ? ' active' : '');
+    chip.textContent = `${step.mult}x`;
+    betScale.appendChild(chip);
+  });
+  const betNext = document.getElementById('betNext');
+  if (betStepIdx < BET_STEPS.length - 1) {
+    const next = BET_STEPS[betStepIdx + 1];
+    const diff = Math.max(next.tc - trueCount, 0).toFixed(1);
+    betNext.textContent = `Nächste Stufe (${next.mult}x) ab True Count ≥ ${next.tc} · noch +${diff}`;
+  } else {
+    betNext.textContent = 'Höchste Stufe erreicht';
+  }
 
   // dealer
   const dealerHandEl = document.getElementById('dealerHand');

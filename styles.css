@@ -189,6 +189,34 @@ html, body {
 .bet-item { grid-column: span 3; }
 .bet-item .count-value { color: var(--accent); font-size: 1rem; }
 
+.bet-scale {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.bet-scale .step {
+  padding: 3px 7px;
+  border-radius: 5px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  background: #0e2e1e;
+  color: var(--text-dim);
+  border: 1px solid #2a5a3d;
+}
+.bet-scale .step.active {
+  background: var(--accent);
+  color: #1a1a1a;
+  border-color: var(--accent);
+}
+.bet-next {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.66rem;
+  color: var(--text-dim);
+}
+
 .table {
   display: flex;
   flex-direction: column;
