@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Blackjack Card Counter</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <h1>♠ Blackjack Counter</h1>
+    <button id="settingsToggle" class="icon-btn" aria-label="Einstellungen">⚙</button>
+  </header>
+
+  <div id="settingsPanel" class="panel hidden">
+    <div class="settings-grid">
+      <label>Decks im Schuh
+        <select id="deckCount">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="4">4</option>
+          <option value="6" selected>6</option>
+          <option value="8">8</option>
+        </select>
+      </label>
+      <label>Dealer bei Soft 17
+        <select id="dealerSoft17">
+          <option value="stand" selected>Stand (S17)</option>
+          <option value="hit">Hit (H17)</option>
+        </select>
+      </label>
+      <label class="checkbox-row"><input type="checkbox" id="rulesDas" checked> Double nach Split (DAS)</label>
+      <label class="checkbox-row"><input type="checkbox" id="rulesSurrender" checked> Surrender erlaubt</label>
+      <label>Einsatz-Einheit (€)
+        <input type="number" id="betUnit" value="10" min="1" step="1">
+      </label>
+    </div>
+    <button id="resetShoeBtn" class="danger-btn">🔄 Neuer Schuh (Count zurücksetzen)</button>
+  </div>
+
+  <div class="count-bar">
+    <div class="count-item">
+      <span class="count-label">Running Count</span>
+      <span class="count-value" id="runningCount">0</span>
+    </div>
+    <div class="count-item">
+      <span class="count-label">True Count</span>
+      <span class="count-value" id="trueCount">0.0</span>
+    </div>
+    <div class="count-item">
+      <span class="count-label">Decks übrig</span>
+      <span class="count-value" id="decksRemaining">6.0</span>
+    </div>
+    <div class="count-item">
+      <span class="count-label">Karten gesehen</span>
+      <span class="count-value" id="cardsSeen">0/312</span>
+    </div>
+    <div class="count-item bet-item">
+      <span class="count-label">Wett-Empfehlung</span>
+      <span class="count-value" id="betSuggestion">1 Einheit</span>
+    </div>
+  </div>
+
+  <main class="table">
+    <section class="hand-block dealer-block">
+      <div class="hand-header">
+        <h2>Dealer</h2>
+        <button class="target-btn" data-target="dealer">Karten hier zufügen</button>
+      </div>
+      <div class="hand-cards" id="dealerHand"></div>
+      <div class="hand-total" id="dealerTotal"></div>
+    </section>
+
+    <section id="playerArea" class="player-area"></section>
+
+    <section class="hand-block other-block">
+      <div class="hand-header">
+        <h2>Weitere Karten <span class="hint">(andere Mitspieler am Tisch)</span></h2>
+        <button class="target-btn" data-target="other">Karten hier zufügen</button>
+      </div>
+      <div class="hand-cards" id="otherHand"></div>
+    </section>
+  </main>
+
+  <div id="advicePanel" class="advice-panel hidden">
+    <div class="advice-main" id="adviceMain"></div>
+    <div class="advice-sub" id="adviceSub"></div>
+  </div>
+
+  <div class="controls">
+    <button id="splitBtn" class="ctrl-btn hidden">Hand splitten</button>
+    <button id="addHandBtn" class="ctrl-btn">+ Spielerhand</button>
+    <button id="undoBtn" class="ctrl-btn">↶ Zurück</button>
+    <button id="newRoundBtn" class="ctrl-btn primary">Neue Runde</button>
+  </div>
+
+  <div class="active-target-bar">
+    Aktives Ziel: <strong id="activeTargetLabel">Dealer</strong>
+  </div>
+
+  <div class="picker" id="picker"></div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
